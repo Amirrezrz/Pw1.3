@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -9,23 +7,41 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+// Import supabase client - update path if needed
+import { supabase } from "@/lib/supabaseClient"
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMessage("")
 
-    // In a real app, you would authenticate with a backend
-    // For demo purposes, we'll simulate a login
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      // Use Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        throw error
+      }
+
+      // If successful, redirect to dashboard
       router.push("/dashboard")
-    }, 1000)
+      router.refresh()
+    } catch (error: any) {
+      // Handle authentication errors
+      setErrorMessage(error.message || "Login failed. Please check your credentials.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -72,6 +88,11 @@ export default function LoginPage() {
                 className="border-sage bg-cream"
               />
             </div>
+            {errorMessage && (
+              <div className="text-red-500 text-sm mt-1">
+                {errorMessage}
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button className="w-full bg-blue-500 hover:bg-blue-700 text-white" type="submit" disabled={isLoading}>
@@ -89,4 +110,3 @@ export default function LoginPage() {
     </div>
   )
 }
-
